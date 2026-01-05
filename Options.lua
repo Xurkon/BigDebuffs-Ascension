@@ -1399,16 +1399,6 @@ function BigDebuffs:SetupOptions()
 								width = "normal",
 								desc = "Enable BigDebuffs on raid frames",
 							},
-							anchor = {
-								name = L["Anchor"],
-								desc = L["Anchor to attach the BigDebuffs frames"],
-								type = "select",
-								values = {
-									["auto"] = L["Automatic"],
-									["manual"] = L["Manual"],
-								},
-								order = 2,
-							},
 							size = {
 								type = "range",
 								disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled end,
@@ -1417,7 +1407,7 @@ function BigDebuffs:SetupOptions()
 								min = 10,
 								max = 50,
 								step = 1,
-								order = 3,
+								order = 2,
 							},
 							alpha = {
 								type = "range",
@@ -1526,16 +1516,6 @@ function BigDebuffs:SetupOptions()
 								width = "normal",
 								desc = "Enable BigDebuffs on nameplates",
 							},
-							anchor = {
-								name = L["Anchor"],
-								desc = L["Anchor to attach the BigDebuffs frames"],
-								type = "select",
-								values = {
-									["auto"] = L["Automatic"],
-									["manual"] = L["Manual"],
-								},
-								order = 2,
-							},
 							size = {
 								type = "range",
 								disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled end,
@@ -1544,7 +1524,7 @@ function BigDebuffs:SetupOptions()
 								min = 15,
 								max = 60,
 								step = 1,
-								order = 3,
+								order = 2,
 							},
 							alpha = {
 								type = "range",
