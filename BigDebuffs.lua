@@ -216,6 +216,42 @@ local defaults = {
 				buffs_other = false,
 				snare = false,
 			},
+			-- Raid frames (Ascension raid frame support)
+			raid = {
+				enabled = true,
+				anchor = "auto",
+				size = 26,
+				alpha = 1,
+
+				immunities = true,
+				cc = true,
+				silence = true,
+				interrupts = true,
+				roots = true,
+				disarm = true,
+				buffs_defensive = false,
+				buffs_offensive = false,
+				buffs_other = false,
+				snare = false,
+			},
+			-- Nameplate support (Ascension C_NamePlate API)
+			nameplate = {
+				enabled = true,
+				anchor = "auto",
+				size = 30,
+				alpha = 1,
+
+				immunities = true,
+				cc = true,
+				silence = true,
+				interrupts = true,
+				roots = true,
+				disarm = true,
+				buffs_defensive = false,
+				buffs_offensive = false,
+				buffs_other = false,
+				snare = false,
+			},
 		},
 		priority = {
 			immunities = 65,

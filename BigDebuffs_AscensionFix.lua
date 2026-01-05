@@ -1,6 +1,10 @@
 -- Fix BigDebuffs for WOW Ascension modified by Hannahmckay
+-- Enhanced with LibGetFrame for dynamic raid frame support
 
 local InArena = InArena or function() return (select(2, IsInInstance()) == "arena") end
+
+-- LibGetFrame for dynamic unit frame detection (works with any raid frame addon)
+local LibGetFrame = LibStub and LibStub("LibGetFrame-1.0", true)
 
 BigDebuffs.SpellsByName = {}
 
@@ -49,7 +53,148 @@ function BigDebuffs:OnEnable()
         original_OnEnable(self)
     end
     
+    -- Register nameplate events (Ascension has modern C_NamePlate API backported)
+    if C_NamePlate then
+        self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+        self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+        
+        -- Schedule regular nameplate aura updates (in case UNIT_AURA doesn't fire for nameplates)
+        self:ScheduleRepeatingTimer("UpdateNameplates", 0.2)
+    end
+    
     BigDebuffs.TestDebuffs = TestDebuffs
+end
+
+-- Update all active nameplates (called periodically)
+function BigDebuffs:UpdateNameplates()
+    if not C_NamePlate then return end
+    if not self.db.profile.unitFrames.nameplate then return end
+    if not self.db.profile.unitFrames.nameplate.enabled then return end
+    
+    for unit, frame in pairs(self.NamePlateFrames) do
+        if frame and frame:IsShown() or UnitExists(unit) then
+            self:UNIT_AURA(nil, unit)
+        end
+    end
+end
+
+-- Nameplate event handlers (Ascension C_NamePlate API)
+function BigDebuffs:NAME_PLATE_UNIT_ADDED(event, unit)
+    if not unit or not self.db.profile.unitFrames.nameplate then return end
+    if not self.db.profile.unitFrames.nameplate.enabled then return end
+    
+    -- Create/attach frame for this nameplate unit
+    self:AttachNamePlateFrame(unit)
+    self:UNIT_AURA(nil, unit)
+end
+
+function BigDebuffs:NAME_PLATE_UNIT_REMOVED(event, unit)
+    if not unit then return end
+    
+    local frame = self.NamePlateFrames and self.NamePlateFrames[unit]
+    if frame then
+        frame:Hide()
+        frame.current = nil
+        frame.currentAuraType = nil
+        frame.currentSpellId = nil
+    end
+end
+
+-- Initialize nameplate frames table
+BigDebuffs.NamePlateFrames = {}
+
+function BigDebuffs:AttachNamePlateFrame(unit)
+    if not C_NamePlate then return end
+    
+    local nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+    if not nameplate then return end
+    
+    local frame = self.NamePlateFrames[unit]
+    local frameName = "BigDebuffs" .. unit .. "NamePlateFrame"
+    
+    if not frame then
+        frame = CreateFrame("Button", frameName, nameplate, "BigDebuffsUnitFrameTemplate")
+        frame.icon = _G[frameName .. "Icon"]
+        
+        frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
+        frame.cooldownContainer:SetAllPoints()
+        
+        frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
+        frame.CircleCooldown:SetParent(frame.cooldownContainer)
+        frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
+        frame.CircleCooldown:SetDrawBling(false)
+        frame.CircleCooldown:SetAllPoints()
+        
+        frame.icon:SetDrawLayer("BORDER")
+        
+        self.NamePlateFrames[unit] = frame
+    end
+    
+    -- Position on nameplate
+    frame:ClearAllPoints()
+    frame:SetParent(nameplate)
+    
+    local size = self.db.profile.unitFrames.nameplate.size or 30
+    frame:SetSize(size, size)
+    frame:SetPoint("BOTTOM", nameplate, "TOP", 0, 2)
+    frame:SetAlpha(self.db.profile.unitFrames.nameplate.alpha or 1)
+    
+    frame.unit = unit
+    frame.isNameplate = true
+end
+
+-- Initialize raid frames table (using LibGetFrame for dynamic detection)
+BigDebuffs.RaidFrames = {}
+
+function BigDebuffs:AttachRaidFrame(unit)
+    if not LibGetFrame then return end
+    
+    -- Use LibGetFrame to dynamically find the raid frame for this unit
+    local raidFrame = LibGetFrame.GetUnitFrame(unit, {
+        ignorePlayerFrame = true,
+        ignoreTargetFrame = true,
+        ignoreTargettargetFrame = true,
+        ignorePartyFrame = true,  -- Party frames handled separately
+        ignoreRaidFrame = false,
+    })
+    
+    if not raidFrame then return end
+    
+    local frame = self.RaidFrames[unit]
+    local frameName = "BigDebuffs" .. unit .. "RaidFrame"
+    
+    if not frame then
+        frame = CreateFrame("Button", frameName, raidFrame, "BigDebuffsUnitFrameTemplate")
+        frame.icon = _G[frameName .. "Icon"]
+        
+        frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
+        frame.cooldownContainer:SetAllPoints()
+        
+        frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
+        frame.CircleCooldown:SetParent(frame.cooldownContainer)
+        frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
+        frame.CircleCooldown:SetDrawBling(false)
+        frame.CircleCooldown:SetAllPoints()
+        
+        frame.icon:SetDrawLayer("BORDER")
+        
+        self.RaidFrames[unit] = frame
+    end
+    
+    -- Position on raid frame
+    frame:ClearAllPoints()
+    frame:SetParent(raidFrame)
+    
+    local size = self.db.profile.unitFrames.raid.size or 26
+    frame:SetSize(size, size)
+    frame:SetPoint("CENTER", raidFrame, "CENTER", 0, 0)
+    frame:SetAlpha(self.db.profile.unitFrames.raid.alpha or 1)
+    
+    -- Raise frame level to appear on top
+    frame:SetFrameLevel(raidFrame:GetFrameLevel() + 10)
+    
+    frame.unit = unit
+    frame.isRaidFrame = true
 end
 
 function BigDebuffs:GetAuraPriority(name, id, unit)
@@ -81,7 +226,14 @@ function BigDebuffs:GetAuraPriority(name, id, unit)
         end
     end
 
-    if not self.db.profile.unitFrames[unit:gsub("%d", "")][spellData.type] then 
+    -- Determine unit type for config lookup
+    local unitType = unit:gsub("%d", "")
+    if unit:match("^nameplate%d+$") then
+        unitType = "nameplate"
+    end
+    
+    local unitConfig = self.db.profile.unitFrames[unitType]
+    if not unitConfig or not unitConfig[spellData.type] then 
         return 
     end
 
@@ -102,20 +254,45 @@ function BigDebuffs:GetAuraPriority(name, id, unit)
 end
 
 function BigDebuffs:UNIT_AURA(event, unit)
-    if not self.db.profile.unitFrames.enabled
-    or not unit
-    or not self.db.profile.unitFrames[unit:gsub("%d", "")]
-    or not self.db.profile.unitFrames[unit:gsub("%d", "")].enabled
-    or not self.test and self.db.profile.unitFrames[unit:gsub("%d", "")].inArena and not InArena()
-    then return end
+    if not self.db.profile.unitFrames.enabled or not unit then return end
+    
+    -- Determine unit type for config lookup
+    local unitType = unit:gsub("%d", "")
+    
+    -- Handle nameplate units specially
+    local isNameplate = unit:match("^nameplate%d+$")
+    if isNameplate then
+        unitType = "nameplate"
+    end
+    
+    -- Handle raid units specially
+    local isRaid = unit:match("^raid%d+$")
+    if isRaid then
+        unitType = "raid"
+    end
+    
+    -- Check if unit type config exists and is enabled
+    local unitConfig = self.db.profile.unitFrames[unitType]
+    if not unitConfig then return end
+    if not unitConfig.enabled then return end
+    if not self.test and unitConfig.inArena and not InArena() then return end
 
     if unit == "player" then
         self:UNIT_AURA(nil, "playerFAKE")
     end
 
-    self:AttachUnitFrame(unit)
-
-    local frame = self.UnitFrames[unit]
+    -- Use appropriate frame table for different unit types
+    local frame
+    if isNameplate then
+        self:AttachNamePlateFrame(unit)
+        frame = self.NamePlateFrames[unit]
+    elseif isRaid and LibGetFrame then
+        self:AttachRaidFrame(unit)
+        frame = self.RaidFrames[unit]
+    else
+        self:AttachUnitFrame(unit)
+        frame = self.UnitFrames[unit]
+    end
     if not frame then return end
 
     if unit == "playerFAKE" then
