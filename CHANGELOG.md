@@ -1,5 +1,25 @@
 # BigDebuffs Changelog
 
+## Version 6.9.2 - Test Mode Fix
+
+### Bug Fixes
+
+- Fixed test mode not displaying movable frames for Raid and Nameplate configurations
+- When test mode is enabled, 5 raid test frames (raid1-raid5) now appear for positioning
+- When test mode is enabled, 1 nameplate test frame appears for positioning
+- Test frames can be dragged to desired positions and positions are saved
+
+---
+
+## Version 6.9.1 - Locale Fixes
+
+### Bug Fixes
+
+- Fixed missing locale entries for nameplate options (snare, silence, disarm, etc.)
+- Added 22 missing locale strings for nameplate aura type toggles
+
+---
+
 ## Version 6.9 - Ascension Raid/Nameplate Support
 
 ### New Features

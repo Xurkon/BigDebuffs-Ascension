@@ -347,7 +347,7 @@
         <p class="subtitle">Display important CC/debuff information as large icons on unit frames</p>
 
         <div class="badges">
-            <span class="badge version">v6.9</span>
+            <span class="badge version">v6.9.2</span>
             <span class="badge wow">WoW 3.3.5a</span>
             <span class="badge platform">Project Ascension</span>
         </div>
@@ -421,13 +421,24 @@
         <section>
             <h2>Latest Changes</h2>
             <div class="changelog">
-                <h3>v6.9 - Ascension Raid/Nameplate Support</h3>
+                <h3>v6.9.2 - Test Mode Fix</h3>
+                <ul>
+                    <li>Fixed test mode not displaying movable frames for Raid/Nameplate configs</li>
+                    <li>Test mode now shows 5 raid test frames and 1 nameplate test frame</li>
+                    <li>Test frames can be dragged and positions are saved</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">v6.9.1 - Locale Fixes</h3>
+                <ul>
+                    <li>Fixed missing locale entries for nameplate options</li>
+                    <li>Added 22 missing locale strings for nameplate aura toggles</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">v6.9 - Ascension Raid/Nameplate Support</h3>
                 <ul>
                     <li>Added support for raid units (raid1-raid40)</li>
                     <li>Integrated LibGetFrame-1.0 for dynamic raid frame detection</li>
                     <li>Added nameplate support using Ascension's C_NamePlate API</li>
-                    <li>Registers for NAME_PLATE_UNIT_ADDED and NAME_PLATE_UNIT_REMOVED events</li>
-                    <li>Scheduled timer for continuous aura updates on nameplates</li>
                     <li>New "Raid Frames" and "Nameplates" tabs in Options UI</li>
                     <li>Configurable icon size and aura types for raid frames and nameplates</li>
                     <li>Bundled LibGetFrame-1.0 library</li>
