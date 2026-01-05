@@ -538,7 +538,190 @@ function BigDebuffs:Test()
     
     if self.test then
         print("|cff00ff00BigDebuffs Test Mode:|r ENABLED")
+        
+        -- Create test frames for raid units (manual positioning)
+        if self.db.profile.unitFrames.raid and self.db.profile.unitFrames.raid.enabled then
+            self:CreateRaidTestFrames()
+        end
+        
+        -- Create test frame for nameplates (manual positioning)
+        if self.db.profile.unitFrames.nameplate and self.db.profile.unitFrames.nameplate.enabled then
+            self:CreateNameplateTestFrame()
+        end
     else
         print("|cffff0000BigDebuffs Test Mode:|r DISABLED")
+        
+        -- Hide raid test frames
+        self:HideRaidTestFrames()
+        
+        -- Hide nameplate test frame
+        self:HideNameplateTestFrame()
+    end
+end
+
+-- Raid Test Frames for manual positioning
+BigDebuffs.RaidTestFrames = {}
+
+function BigDebuffs:CreateRaidTestFrames()
+    local config = self.db.profile.unitFrames.raid
+    if not config then return end
+    
+    -- Create 5 test frames for raid testing
+    for i = 1, 5 do
+        local unit = "raid" .. i
+        local frameName = "BigDebuffs" .. unit .. "TestFrame"
+        
+        local frame = self.RaidTestFrames[unit]
+        if not frame then
+            frame = CreateFrame("Button", frameName, UIParent, "BigDebuffsUnitFrameTemplate")
+            frame.icon = _G[frameName .. "Icon"]
+            
+            frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
+            frame.cooldownContainer:SetAllPoints()
+            
+            frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
+            frame.CircleCooldown:SetParent(frame.cooldownContainer)
+            frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
+            frame.CircleCooldown:SetDrawBling(false)
+            frame.CircleCooldown:SetAllPoints()
+            
+            frame.icon:SetDrawLayer("BORDER")
+            
+            frame:RegisterForDrag("LeftButton")
+            frame:SetMovable(true)
+            frame:EnableMouse(true)
+            frame:SetScript("OnDragStart", function(self)
+                self:StartMoving()
+            end)
+            frame:SetScript("OnDragStop", function(self)
+                self:StopMovingOrSizing()
+                BigDebuffs:SaveRaidTestFramePosition(self.unit, self)
+            end)
+            
+            -- Add label
+            frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            frame.label:SetPoint("BOTTOM", frame, "TOP", 0, 2)
+            frame.label:SetText(unit)
+            
+            self.RaidTestFrames[unit] = frame
+        end
+        
+        frame.unit = unit
+        
+        -- Setup appearance
+        local size = config.size or 26
+        frame:SetSize(size, size)
+        frame:SetAlpha(config.alpha or 1)
+        
+        -- Test debuff icon
+        local testSpellId = 10890 -- Psychic Scream
+        local _, _, testIcon = GetSpellInfo(testSpellId)
+        if testIcon then
+            frame.icon:SetTexture(testIcon)
+        end
+        
+        -- Position
+        frame:ClearAllPoints()
+        local savedPos = self.db.profile.unitFrames.raid["test_" .. unit .. "_position"]
+        if savedPos then
+            frame:SetPoint(unpack(savedPos))
+        else
+            -- Default grid layout
+            frame:SetPoint("CENTER", UIParent, "CENTER", -100 + (i-1) * 50, 100)
+        end
+        
+        frame:Show()
+    end
+end
+
+function BigDebuffs:SaveRaidTestFramePosition(unit, frame)
+    if not self.db.profile.unitFrames.raid then return end
+    self.db.profile.unitFrames.raid["test_" .. unit .. "_position"] = { frame:GetPoint() }
+end
+
+function BigDebuffs:HideRaidTestFrames()
+    for unit, frame in pairs(self.RaidTestFrames) do
+        if frame then
+            frame:Hide()
+        end
+    end
+end
+
+-- Nameplate Test Frame for manual positioning
+function BigDebuffs:CreateNameplateTestFrame()
+    local config = self.db.profile.unitFrames.nameplate
+    if not config then return end
+    
+    local frameName = "BigDebuffsNameplateTestFrame"
+    local frame = self.NameplateTestFrame
+    
+    if not frame then
+        frame = CreateFrame("Button", frameName, UIParent, "BigDebuffsUnitFrameTemplate")
+        frame.icon = _G[frameName .. "Icon"]
+        
+        frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
+        frame.cooldownContainer:SetAllPoints()
+        
+        frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
+        frame.CircleCooldown:SetParent(frame.cooldownContainer)
+        frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
+        frame.CircleCooldown:SetDrawBling(false)
+        frame.CircleCooldown:SetAllPoints()
+        
+        frame.icon:SetDrawLayer("BORDER")
+        
+        frame:RegisterForDrag("LeftButton")
+        frame:SetMovable(true)
+        frame:EnableMouse(true)
+        frame:SetScript("OnDragStart", function(self)
+            self:StartMoving()
+        end)
+        frame:SetScript("OnDragStop", function(self)
+            self:StopMovingOrSizing()
+            BigDebuffs:SaveNameplateTestFramePosition(self)
+        end)
+        
+        -- Add label
+        frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.label:SetPoint("BOTTOM", frame, "TOP", 0, 2)
+        frame.label:SetText("Nameplate")
+        
+        self.NameplateTestFrame = frame
+    end
+    
+    frame.unit = "nameplate"
+    
+    -- Setup appearance
+    local size = config.size or 30
+    frame:SetSize(size, size)
+    frame:SetAlpha(config.alpha or 1)
+    
+    -- Test debuff icon
+    local testSpellId = 10890 -- Psychic Scream
+    local _, _, testIcon = GetSpellInfo(testSpellId)
+    if testIcon then
+        frame.icon:SetTexture(testIcon)
+    end
+    
+    -- Position
+    frame:ClearAllPoints()
+    local savedPos = self.db.profile.unitFrames.nameplate.test_position
+    if savedPos then
+        frame:SetPoint(unpack(savedPos))
+    else
+        frame:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
+    end
+    
+    frame:Show()
+end
+
+function BigDebuffs:SaveNameplateTestFramePosition(frame)
+    if not self.db.profile.unitFrames.nameplate then return end
+    self.db.profile.unitFrames.nameplate.test_position = { frame:GetPoint() }
+end
+
+function BigDebuffs:HideNameplateTestFrame()
+    if self.NameplateTestFrame then
+        self.NameplateTestFrame:Hide()
     end
 end
