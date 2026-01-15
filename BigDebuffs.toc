@@ -2,7 +2,7 @@
 ## Title: BigDebuffs
 ## Notes: Increases the debuff size of crowd control effects on the Blizzard raid frames.
 ## Notes-ruRU: Отображает информацию о контролях на фреймах в виде иконок.
-## Version: 6.8
+## Version: 6.9.3
 ## Author: Jordon, WotLK backport by Konjunktur - modified by Hannahmckay(for ascension/bronzebeard)
 ## DefaultState: Enabled
 ## SavedVariables: BigDebuffsDB

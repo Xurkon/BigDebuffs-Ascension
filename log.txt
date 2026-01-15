@@ -1,0 +1,5 @@
+872401f v6.9.3: Removed redundant anchor toggles from raid/nameplate options
+70baaed Updated CHANGELOG.md and docs with v6.9.1 and v6.9.2 changes
+7fdd4b9 v6.9.2: Fixed test mode for raid and nameplate frames - Added movable test frames
+16a9d17 v6.9.1: Added missing locale entries for nameplate options
+2491b4e v6.9: Ascension Raid/Nameplate Support with documentation and GitHub Pages

@@ -187,7 +187,11 @@ function BigDebuffs:AttachRaidFrame(unit)
     
     local size = self.db.profile.unitFrames.raid.size or 26
     frame:SetSize(size, size)
-    frame:SetPoint("CENTER", raidFrame, "CENTER", 0, 0)
+    
+    -- Use configurable X/Y offsets for positioning
+    local offsetX = self.db.profile.unitFrames.raid.offsetX or 0
+    local offsetY = self.db.profile.unitFrames.raid.offsetY or 0
+    frame:SetPoint("CENTER", raidFrame, "CENTER", offsetX, offsetY)
     frame:SetAlpha(self.db.profile.unitFrames.raid.alpha or 1)
     
     -- Raise frame level to appear on top
@@ -573,20 +577,34 @@ function BigDebuffs:CreateRaidTestFrames()
         
         local frame = self.RaidTestFrames[unit]
         if not frame then
-            frame = CreateFrame("Button", frameName, UIParent, "BigDebuffsUnitFrameTemplate")
-            frame.icon = _G[frameName .. "Icon"]
+            -- Create background frame to represent a raid frame
+            frame = CreateFrame("Frame", frameName .. "Background", UIParent)
+            frame:SetSize(60, 40) -- Typical raid frame size
+            frame:SetBackdrop({
+                bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile = true, tileSize = 16, edgeSize = 16,
+                insets = { left = 4, right = 4, top = 4, bottom = 4 }
+            })
+            frame:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
+            frame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
             
-            frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
-            frame.cooldownContainer:SetAllPoints()
+            -- Create BigDebuffs icon frame
+            local iconFrame = CreateFrame("Button", frameName, frame, "BigDebuffsUnitFrameTemplate")
+            iconFrame.icon = _G[frameName .. "Icon"]
             
-            frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
-            frame.CircleCooldown:SetParent(frame.cooldownContainer)
-            frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
-            frame.CircleCooldown:SetDrawBling(false)
-            frame.CircleCooldown:SetAllPoints()
+            iconFrame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", iconFrame)
+            iconFrame.cooldownContainer:SetAllPoints()
             
-            frame.icon:SetDrawLayer("BORDER")
+            iconFrame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", iconFrame, "CircleCooldownFrameTemplate")
+            iconFrame.CircleCooldown:SetParent(iconFrame.cooldownContainer)
+            iconFrame.CircleCooldown:SetFrameLevel(iconFrame.cooldownContainer:GetFrameLevel() + 1)
+            iconFrame.CircleCooldown:SetDrawBling(false)
+            iconFrame.CircleCooldown:SetAllPoints()
             
+            iconFrame.icon:SetDrawLayer("BORDER")
+            
+            -- Make the background draggable, not the icon
             frame:RegisterForDrag("LeftButton")
             frame:SetMovable(true)
             frame:EnableMouse(true)
@@ -595,42 +613,56 @@ function BigDebuffs:CreateRaidTestFrames()
             end)
             frame:SetScript("OnDragStop", function(self)
                 self:StopMovingOrSizing()
-                BigDebuffs:SaveRaidTestFramePosition(self.unit, self)
+                BigDebuffs:SaveRaidTestFramePosition(unit, self)
             end)
             
             -- Add label
             frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
             frame.label:SetPoint("BOTTOM", frame, "TOP", 0, 2)
-            frame.label:SetText(unit)
+            
+            -- Store references
+            frame.iconFrame = iconFrame
+            iconFrame.background = frame
             
             self.RaidTestFrames[unit] = frame
         end
         
-        frame.unit = unit
+        local iconFrame = frame.iconFrame
+        iconFrame.unit = unit
         
-        -- Setup appearance
+        -- Setup icon appearance
         local size = config.size or 26
-        frame:SetSize(size, size)
-        frame:SetAlpha(config.alpha or 1)
+        iconFrame:SetSize(size, size)
+        iconFrame:SetAlpha(config.alpha or 1)
         
         -- Test debuff icon
         local testSpellId = 10890 -- Psychic Scream
         local _, _, testIcon = GetSpellInfo(testSpellId)
         if testIcon then
-            frame.icon:SetTexture(testIcon)
+            iconFrame.icon:SetTexture(testIcon)
         end
         
-        -- Position
+        -- Position icon relative to background using offsetX/offsetY
+        local offsetX = config.offsetX or 0
+        local offsetY = config.offsetY or 0
+        iconFrame:ClearAllPoints()
+        iconFrame:SetPoint("CENTER", frame, "CENTER", offsetX, offsetY)
+        
+        -- Update label with offset info
+        frame.label:SetText(string.format("%s (X:%d Y:%d)", unit, offsetX, offsetY))
+        
+        -- Position background frame
         frame:ClearAllPoints()
-        local savedPos = self.db.profile.unitFrames.raid["test_" .. unit .. "_position"]
+        local savedPos = config["test_" .. unit .. "_position"]
         if savedPos then
             frame:SetPoint(unpack(savedPos))
         else
             -- Default grid layout
-            frame:SetPoint("CENTER", UIParent, "CENTER", -100 + (i-1) * 50, 100)
+            frame:SetPoint("CENTER", UIParent, "CENTER", -150 + (i-1) * 75, 100)
         end
         
         frame:Show()
+        iconFrame:Show()
     end
 end
 

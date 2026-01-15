@@ -222,6 +222,8 @@ local defaults = {
 				anchor = "auto",
 				size = 26,
 				alpha = 1,
+				offsetX = 0,
+				offsetY = 0,
 
 				immunities = true,
 				cc = true,

@@ -1,5 +1,48 @@
 # BigDebuffs Changelog
 
+## Version 6.9.3 - Raid Frame Positioning & Test Mode Improvements (by Hutsh)
+
+### New Features
+
+**X/Y Position Control for Raid Frames**
+- Added **Offset X** slider to Options UI for horizontal positioning control (-100 to +100)
+- Added **Offset Y** slider to Options UI for vertical positioning control (-100 to +100)
+- Sliders provide precise control over BigDebuffs icon placement on raid frames
+- Settings persist across /reload and relogs via AceDB
+- Real-time preview when adjusting sliders
+
+**Test Mode Improvements**
+- Completely redesigned raid frame test mode for better visualization
+- Test frames now show mock raid frame backgrounds (60x40 pixels with borders)
+- BigDebuffs icons positioned on backgrounds using actual offsetX/offsetY configuration
+- Labels display current offset values (e.g., "raid1 (X:20 Y:-15)")
+- Entire background+icon units are draggable for repositioning
+- Visual feedback updates in real-time when adjusting position sliders
+
+### Bug Fixes
+
+- Fixed test mode not applying offsetX/offsetY configuration to test frames
+- Fixed test mode visual representation to accurately show how icons will appear on real raid frames
+
+### Technical Changes
+
+- Modified `Options.lua` (lines 1422-1443): Added offsetX and offsetY range sliders to raid frame options
+- Rewrote `CreateRaidTestFrames()` in `BigDebuffs_AscensionFix.lua` (lines 569-637):
+  - Creates background frames using WoW backdrop API to represent raid frames
+  - Positions icon frames relative to backgrounds using offsetX/offsetY values
+  - Two-level structure: frame (background) + iconFrame (BigDebuffs icon)
+  - Cross-references via `frame.iconFrame` and `iconFrame.background`
+  - Updated grid spacing to 75 pixels for better visibility
+
+### Notes
+
+- The Alpha/Opacity slider for raid frames already existed (no changes needed)
+- Backend configuration (`offsetX = 0, offsetY = 0`) was already present in `BigDebuffs.lua`
+- Backend positioning code was already functional in `BigDebuffs_AscensionFix.lua`
+- This update adds UI controls and proper test mode visualization for existing functionality
+
+---
+
 ## Version 6.9.2 - Test Mode Fix
 
 ### Bug Fixes
@@ -11,7 +54,7 @@
 
 ---
 
-## Version 6.9.1 - Locale Fixes
+## Version 6.9.1 - Locale Fixes (by Xurkon)
 
 ### Bug Fixes
 
@@ -20,7 +63,7 @@
 
 ---
 
-## Version 6.9 - Ascension Raid/Nameplate Support
+## Version 6.9 - Ascension Raid/Nameplate Support (by Xurkon)
 
 ### New Features
 

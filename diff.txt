@@ -1,0 +1,244 @@
+diff --git a/BigDebuffs.lua b/BigDebuffs.lua
+index 911f54b..6ab2e63 100644
+--- a/BigDebuffs.lua
++++ b/BigDebuffs.lua
+@@ -222,6 +222,8 @@ local defaults = {
+ 				anchor = "auto",
+ 				size = 26,
+ 				alpha = 1,
++				offsetX = 0,
++				offsetY = 0,
+ 
+ 				immunities = true,
+ 				cc = true,
+diff --git a/BigDebuffs_AscensionFix.lua b/BigDebuffs_AscensionFix.lua
+index 25652fb..ea53690 100644
+--- a/BigDebuffs_AscensionFix.lua
++++ b/BigDebuffs_AscensionFix.lua
+@@ -187,7 +187,11 @@ function BigDebuffs:AttachRaidFrame(unit)
+     
+     local size = self.db.profile.unitFrames.raid.size or 26
+     frame:SetSize(size, size)
+-    frame:SetPoint("CENTER", raidFrame, "CENTER", 0, 0)
++    
++    -- Use configurable X/Y offsets for positioning
++    local offsetX = self.db.profile.unitFrames.raid.offsetX or 0
++    local offsetY = self.db.profile.unitFrames.raid.offsetY or 0
++    frame:SetPoint("CENTER", raidFrame, "CENTER", offsetX, offsetY)
+     frame:SetAlpha(self.db.profile.unitFrames.raid.alpha or 1)
+     
+     -- Raise frame level to appear on top
+@@ -573,20 +577,34 @@ function BigDebuffs:CreateRaidTestFrames()
+         
+         local frame = self.RaidTestFrames[unit]
+         if not frame then
+-            frame = CreateFrame("Button", frameName, UIParent, "BigDebuffsUnitFrameTemplate")
+-            frame.icon = _G[frameName .. "Icon"]
++            -- Create background frame to represent a raid frame
++            frame = CreateFrame("Frame", frameName .. "Background", UIParent)
++            frame:SetSize(60, 40) -- Typical raid frame size
++            frame:SetBackdrop({
++                bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
++                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
++                tile = true, tileSize = 16, edgeSize = 16,
++                insets = { left = 4, right = 4, top = 4, bottom = 4 }
++            })
++            frame:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
++            frame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
++            
++            -- Create BigDebuffs icon frame
++            local iconFrame = CreateFrame("Button", frameName, frame, "BigDebuffsUnitFrameTemplate")
++            iconFrame.icon = _G[frameName .. "Icon"]
+             
+-            frame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", frame)
+-            frame.cooldownContainer:SetAllPoints()
++            iconFrame.cooldownContainer = CreateFrame("Button", frameName .. "CooldownContainer", iconFrame)
++            iconFrame.cooldownContainer:SetAllPoints()
+             
+-            frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
+-            frame.CircleCooldown:SetParent(frame.cooldownContainer)
+-            frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetFrameLevel() + 1)
+-            frame.CircleCooldown:SetDrawBling(false)
+-            frame.CircleCooldown:SetAllPoints()
++            iconFrame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", iconFrame, "CircleCooldownFrameTemplate")
++            iconFrame.CircleCooldown:SetParent(iconFrame.cooldownContainer)
++            iconFrame.CircleCooldown:SetFrameLevel(iconFrame.cooldownContainer:GetFrameLevel() + 1)
++            iconFrame.CircleCooldown:SetDrawBling(false)
++            iconFrame.CircleCooldown:SetAllPoints()
+             
+-            frame.icon:SetDrawLayer("BORDER")
++            iconFrame.icon:SetDrawLayer("BORDER")
+             
++            -- Make the background draggable, not the icon
+             frame:RegisterForDrag("LeftButton")
+             frame:SetMovable(true)
+             frame:EnableMouse(true)
+@@ -595,42 +613,56 @@ function BigDebuffs:CreateRaidTestFrames()
+             end)
+             frame:SetScript("OnDragStop", function(self)
+                 self:StopMovingOrSizing()
+-                BigDebuffs:SaveRaidTestFramePosition(self.unit, self)
++                BigDebuffs:SaveRaidTestFramePosition(unit, self)
+             end)
+             
+             -- Add label
+             frame.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+             frame.label:SetPoint("BOTTOM", frame, "TOP", 0, 2)
+-            frame.label:SetText(unit)
++            
++            -- Store references
++            frame.iconFrame = iconFrame
++            iconFrame.background = frame
+             
+             self.RaidTestFrames[unit] = frame
+         end
+         
+-        frame.unit = unit
++        local iconFrame = frame.iconFrame
++        iconFrame.unit = unit
+         
+-        -- Setup appearance
++        -- Setup icon appearance
+         local size = config.size or 26
+-        frame:SetSize(size, size)
+-        frame:SetAlpha(config.alpha or 1)
++        iconFrame:SetSize(size, size)
++        iconFrame:SetAlpha(config.alpha or 1)
+         
+         -- Test debuff icon
+         local testSpellId = 10890 -- Psychic Scream
+         local _, _, testIcon = GetSpellInfo(testSpellId)
+         if testIcon then
+-            frame.icon:SetTexture(testIcon)
++            iconFrame.icon:SetTexture(testIcon)
+         end
+         
+-        -- Position
++        -- Position icon relative to background using offsetX/offsetY
++        local offsetX = config.offsetX or 0
++        local offsetY = config.offsetY or 0
++        iconFrame:ClearAllPoints()
++        iconFrame:SetPoint("CENTER", frame, "CENTER", offsetX, offsetY)
++        
++        -- Update label with offset info
++        frame.label:SetText(string.format("%s (X:%d Y:%d)", unit, offsetX, offsetY))
++        
++        -- Position background frame
+         frame:ClearAllPoints()
+-        local savedPos = self.db.profile.unitFrames.raid["test_" .. unit .. "_position"]
++        local savedPos = config["test_" .. unit .. "_position"]
+         if savedPos then
+             frame:SetPoint(unpack(savedPos))
+         else
+             -- Default grid layout
+-            frame:SetPoint("CENTER", UIParent, "CENTER", -100 + (i-1) * 50, 100)
++            frame:SetPoint("CENTER", UIParent, "CENTER", -150 + (i-1) * 75, 100)
+         end
+         
+         frame:Show()
++        iconFrame:Show()
+     end
+ end
+ 
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2e0dfbe..4f31c43 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,48 @@
+ # BigDebuffs Changelog
+ 
++## Version 6.9.3 - Raid Frame Positioning & Test Mode Improvements (by Hutsh)
++
++### New Features
++
++**X/Y Position Control for Raid Frames**
++- Added **Offset X** slider to Options UI for horizontal positioning control (-100 to +100)
++- Added **Offset Y** slider to Options UI for vertical positioning control (-100 to +100)
++- Sliders provide precise control over BigDebuffs icon placement on raid frames
++- Settings persist across /reload and relogs via AceDB
++- Real-time preview when adjusting sliders
++
++**Test Mode Improvements**
++- Completely redesigned raid frame test mode for better visualization
++- Test frames now show mock raid frame backgrounds (60x40 pixels with borders)
++- BigDebuffs icons positioned on backgrounds using actual offsetX/offsetY configuration
++- Labels display current offset values (e.g., "raid1 (X:20 Y:-15)")
++- Entire background+icon units are draggable for repositioning
++- Visual feedback updates in real-time when adjusting position sliders
++
++### Bug Fixes
++
++- Fixed test mode not applying offsetX/offsetY configuration to test frames
++- Fixed test mode visual representation to accurately show how icons will appear on real raid frames
++
++### Technical Changes
++
++- Modified `Options.lua` (lines 1422-1443): Added offsetX and offsetY range sliders to raid frame options
++- Rewrote `CreateRaidTestFrames()` in `BigDebuffs_AscensionFix.lua` (lines 569-637):
++  - Creates background frames using WoW backdrop API to represent raid frames
++  - Positions icon frames relative to backgrounds using offsetX/offsetY values
++  - Two-level structure: frame (background) + iconFrame (BigDebuffs icon)
++  - Cross-references via `frame.iconFrame` and `iconFrame.background`
++  - Updated grid spacing to 75 pixels for better visibility
++
++### Notes
++
++- The Alpha/Opacity slider for raid frames already existed (no changes needed)
++- Backend configuration (`offsetX = 0, offsetY = 0`) was already present in `BigDebuffs.lua`
++- Backend positioning code was already functional in `BigDebuffs_AscensionFix.lua`
++- This update adds UI controls and proper test mode visualization for existing functionality
++
++---
++
+ ## Version 6.9.2 - Test Mode Fix
+ 
+ ### Bug Fixes
+@@ -11,7 +54,7 @@
+ 
+ ---
+ 
+-## Version 6.9.1 - Locale Fixes
++## Version 6.9.1 - Locale Fixes (by Xurkon)
+ 
+ ### Bug Fixes
+ 
+@@ -20,7 +63,7 @@
+ 
+ ---
+ 
+-## Version 6.9 - Ascension Raid/Nameplate Support
++## Version 6.9 - Ascension Raid/Nameplate Support (by Xurkon)
+ 
+ ### New Features
+ 
+diff --git a/Options.lua b/Options.lua
+index d677dc5..a0e6885 100644
+--- a/Options.lua
++++ b/Options.lua
+@@ -1419,6 +1419,26 @@ function BigDebuffs:SetupOptions()
+ 								step = 0.01,
+ 								order = 4,
+ 							},
++							offsetX = {
++								type = "range",
++								disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled end,
++								name = "Offset X",
++								desc = "Adjust the horizontal position of the BigDebuffs icon (negative = left, positive = right)",
++								min = -100,
++								max = 100,
++								step = 1,
++								order = 4.1,
++							},
++							offsetY = {
++								type = "range",
++								disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled end,
++								name = "Offset Y",
++								desc = "Adjust the vertical position of the BigDebuffs icon (negative = down, positive = up)",
++								min = -100,
++								max = 100,
++								step = 1,
++								order = 4.2,
++							},
+ 							spells = {
+ 								order = 5,
+ 								name = L["Spells"],

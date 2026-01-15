@@ -1,0 +1,30 @@
+On branch main
+Your branch and 'origin/main' have diverged,
+and have 6 and 30 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitignore
+	modified:   BigDebuffs.lua
+	modified:   BigDebuffs_AscensionFix.lua
+	modified:   BigDebuffs_TBC.lua
+	modified:   BigDebuffs_Vanilla.lua
+	modified:   BigDebuffs_Wrath.lua
+	modified:   CHANGELOG.md
+	modified:   Locales/Locales.xml
+	modified:   Locales/deDE.lua
+	modified:   Locales/enUS.lua
+	modified:   Locales/koKR.lua
+	modified:   Locales/ptBR.lua
+	modified:   Locales/zhCN.lua
+	modified:   Options.lua
+	modified:   docs/index.html
+	modified:   libs/LibGetFrame-1.0/LibGetFrame-1.0.lua
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
