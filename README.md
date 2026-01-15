@@ -1,6 +1,6 @@
 # BigDebuffs
 
-![Version](https://img.shields.io/badge/version-6.9-blue?style=for-the-badge) ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-6.9.3-blue?style=for-the-badge) ![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange?style=for-the-badge)
 [![Platform](https://img.shields.io/badge/platform-Project%20Ascension-green?style=for-the-badge)](https://ascension.gg/)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=for-the-badge)](https://Xurkon.github.io/BigDebuffs-Ascension/)
 ![Downloads](https://img.shields.io/github/downloads/Xurkon/BigDebuffs-Ascension/total?style=for-the-badge&label=DOWNLOADS&color=e67e22)
@@ -26,7 +26,16 @@ Displays important crowd control and debuff information as large icons on variou
 * Configurable icon sizes and positions
 * ENG and RUS locale support
 
-## New in v6.9 - Ascension Raid/Nameplate Support
+## New in v6.9.3 - Raid Frame Positioning & Test Mode Improvements
++
++* Added Offset X and Offset Y sliders for precise raid frame icon positioning
++* Redesigned raid frame test mode with mock background frames for better visualization
++* Labels in test mode now show real-time offset values
++* Test frames are now draggable with visual feedback
++* Fixed test mode not properly applying offsets during configuration  
++*(Implemented by Hutsh)*
++
++## New in v6.9 - Ascension Raid/Nameplate Support
 
 * Added support for raid units (raid1-raid40)
 * Integrated LibGetFrame-1.0 for dynamic raid frame detection
@@ -41,6 +50,7 @@ Displays important crowd control and debuff information as large icons on variou
 ## Credits
 
 * **Xurkon** - Ascension compatibility fixes, raid frame support, and nameplate integration
++* **Hutsh** - Raid frame positioning improvements and test mode enhancements
 
 ## Disclaimer
 
